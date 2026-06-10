@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+
+{% block title %}Unity Asset Recommendation - Results{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Top Action Headers -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="h3 mb-1 text-gradient-primary fw-bold">
+                <i class="fa-solid fa-chart-column me-2"></i>Recommendation Dashboard
+            </h2>
+            <p class="text-secondary mb-0">Project Architecture & Asset Analysis for: <strong>{{ project.project_name }}</strong></p>
+        </div>
+        
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary-custom btn-sm py-2">
+                <i class="fa-solid fa-house me-1"></i> New Analysis
+            </a>
+            <a href="{{ url_for('export_project', project_id=project.id) }}" class="btn btn-secondary-custom btn-sm py-2">
+                <i class="fa-solid fa-file-arrow-down me-1"></i> Export Report (MD)
+            </a>
+            <a href="{{ url_for('download_zip', project_id=project.id) }}" class="btn btn-primary-custom btn-sm py-2">
+                <i class="fa-solid fa-file-zipper me-1"></i> Download Starter Kit (ZIP)
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Results Grid -->
+    <div class="row">
+        <!-- Sidebar Summary Box -->
+        <div class="col-lg-4 mb-4">
+            <div class="card glass-card border-secondary p-4 h-100">
+                <h4 class="mb-3 text-gradient-secondary">
+                    <i class="fa-solid fa-circle-info me-2"></i>Quick Specs
+                </h4>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">GAME TITLE</small>
+                    <span class="fw-bold text-white fs-5">{{ project.project_name }}</span>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">GENRE</small>
+                        <span class="badge badge-custom badge-custom-teal"><i class="fa-solid fa-tags me-1"></i> {{ project.genre }}</span>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">PLATFORM</small>
+                        <span class="badge badge-custom badge-custom-purple"><i class="fa-solid fa-laptop-code me-1"></i> {{ project.platform }}</span>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">AUDIENCE</small>
+                        <span class="badge badge-custom badge-custom-teal"><i class="fa-solid fa-users me-1"></i> {{ project.target_audience }}</span>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">COMPLEXITY</small>
+                        {% set complexity = recs.analysis.complexity | lower %}
+                        {% if 'high' in complexity %}
+                            <span class="badge badge-custom badge-custom-rose"><i class="fa-solid fa-gauge-high me-1"></i> High</span>
+                        {% elif 'low' in complexity %}
+                            <span class="badge badge-custom badge-custom-teal"><i class="fa-solid fa-gauge-simple me-1"></i> Low</span>
+                        {% else %}
+                            <span class="badge badge-custom badge-custom-purple"><i class="fa-solid fa-gauge me-1"></i> Medium</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <small class="text-muted d-block">GAME CONCEPT</small>
+                    <p class="text-secondary fs-7 mb-0 style-desc" style="font-size: 0.9rem; max-height: 150px; overflow-y: auto;">
+                        {{ project.description }}
+                    </p>
+                </div>
+                
+                <hr class="border-secondary my-4">
+                
+                <div class="mb-3">
+                    <h5 class="text-white fs-6 mb-2">Art Requirements</h5>
+                    <p class="text-secondary small mb-0">{{ recs.analysis.art_requirements }}</p>
+                </div>
+                
+                <div>
+                    <h5 class="text-white fs-6 mb-2">Monetization Opportunity</h5>
+                    <p class="text-secondary small mb-0">{{ recs.analysis.monetization }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Dashboard Tabs -->
+        <div class="col-lg-8 mb-4">
+            <div class="card glass-card border-secondary p-4 h-100">
+                <!-- Navigation Pills -->
+                <ul class="nav nav-pills mb-4" id="resultsTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">
+                            <i class="fa-solid fa-chess me-1"></i> Analysis
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="assets-tab" data-bs-toggle="pill" data-bs-target="#assets" type="button" role="tab" aria-controls="assets" aria-selected="false">
+                            <i class="fa-solid fa-box-open me-1"></i> Assets ({{ recs.assets | length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="arch-tab" data-bs-toggle="pill" data-bs-target="#arch" type="button" role="tab" aria-controls="arch" aria-selected="false">
+                            <i class="fa-solid fa-sitemap me-1"></i> Architecture
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="folder-tab" data-bs-toggle="pill" data-bs-target="#folder" type="button" role="tab" aria-controls="folder" aria-selected="false">
+                            <i class="fa-solid fa-folder-tree me-1"></i> Folders
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="scripts-tab" data-bs-toggle="pill" data-bs-target="#scripts" type="button" role="tab" aria-controls="scripts" aria-selected="false">
+                            <i class="fa-solid fa-code me-1"></i> C# Scripts ({{ scripts | length }})
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="roadmap-tab" data-bs-toggle="pill" data-bs-target="#roadmap" type="button" role="tab" aria-controls="roadmap" aria-selected="false">
+                            <i class="fa-solid fa-route me-1"></i> Roadmap
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content Details -->
+                <div class="tab-content" id="resultsTabContent">
+                    
+                    <!-- TAB 1: Overview & Game Mechanics -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                        <h4 class="text-white mb-4"><i class="fa-solid fa-puzzle-piece me-2 text-info"></i>Core Gameplay Mechanics & Systems</h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="p-3 rounded border border-secondary" style="background-color: rgba(0, 0, 0, 0.2);">
+                                    <h5 class="text-gradient-primary fs-6 mb-3"><i class="fa-solid fa-gamepad me-1"></i> Core Mechanics</h5>
+                                    <ul class="ps-3 mb-0 text-secondary">
+                                        {% for mech in recs.analysis.mechanics %}
+                                            <li class="mb-2">{{ mech }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <div class="p-3 rounded border border-secondary" style="background-color: rgba(0, 0, 0, 0.2);">
+                                    <h5 class="text-gradient-secondary fs-6 mb-3"><i class="fa-solid fa-gears me-1"></i> Required Sub-Systems</h5>
+                                    <ul class="ps-3 mb-0 text-secondary">
+                                        {% for sys in recs.analysis.required_systems %}
+                                            <li class="mb-2">{{ sys }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Recommended Unity Assets -->
+                    <div class="tab-pane fade" id="assets" role="tabpanel" aria-labelledby="assets-tab">
+                        <h4 class="text-white mb-4"><i class="fa-solid fa-cubes me-2 text-info"></i>Recommended Unity Assets & Packages</h4>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover table-bordered border-secondary mb-0 align-middle">
+                                <thead>
+                                    <tr class="table-active">
+                                        <th style="width: 25%;">Asset / Tool</th>
+                                        <th style="width: 20%;">Category</th>
+                                        <th style="width: 20%;">Recommendation</th>
+                                        <th>Purpose / Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for asset in recs.assets %}
+                                        <tr>
+                                            <td class="fw-bold text-white"><i class="fa-solid fa-box text-primary me-2"></i>{{ asset.name }}</td>
+                                            <td>
+                                                <span class="badge badge-custom badge-custom-purple">{{ asset.category }}</span>
+                                            </td>
+                                            <td>
+                                                {% set rating = asset.rating | lower %}
+                                                {% if 'highly' in rating %}
+                                                    <span class="badge badge-custom badge-custom-teal">Highly Recommended</span>
+                                                {% elif 'essential' in rating %}
+                                                    <span class="badge badge-custom badge-custom-rose">Essential</span>
+                                                {% else %}
+                                                    <span class="badge badge-custom badge-custom-teal">Recommended</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-secondary small">{{ asset.purpose }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Project Architecture -->
+                    <div class="tab-pane fade" id="arch" role="tabpanel" aria-labelledby="arch-tab">
+                        <h4 class="text-white mb-4"><i class="fa-solid fa-diagram-project me-2 text-info"></i>Software Architecture Setup</h4>
+                        <p class="text-secondary small">Follow this modular class design to keep code scalable, decoupled, and easy to maintain.</p>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6 mb-4">
+                                <h5 class="text-white fs-6 mb-3"><i class="fa-solid fa-user-gear text-primary me-2"></i>Recommended Managers</h5>
+                                <div class="list-group list-group-flush border border-secondary rounded overflow-hidden">
+                                    {% for manager in recs.architecture.managers %}
+                                        <div class="list-group-item bg-transparent text-secondary border-secondary p-3">
+                                            <div class="fw-bold text-white mb-1">{{ manager.name }}</div>
+                                            <span class="small d-block">{{ manager.purpose }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-4">
+                                <h5 class="text-white fs-6 mb-3"><i class="fa-solid fa-laptop-medical text-secondary me-2"></i>Recommended Game Systems</h5>
+                                <div class="list-group list-group-flush border border-secondary rounded overflow-hidden">
+                                    {% set def_systems = recs.architecture.systems %}
+                                    {% for sys in def_systems %}
+                                        <div class="list-group-item bg-transparent text-secondary border-secondary p-3">
+                                            <div class="fw-bold text-white mb-1">{{ sys.name }}</div>
+                                            <span class="small d-block">{{ sys.purpose }}</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Folder Structure -->
+                    <div class="tab-pane fade" id="folder" role="tabpanel" aria-labelledby="folder-tab">
+                        <h4 class="text-white mb-3"><i class="fa-solid fa-folder-open me-2 text-info"></i>Professional Unity Directory Structure</h4>
+                        <p class="text-secondary small mb-4">This structure ensures clean asset organization. Use the starter ZIP download to export this layout physically to your computer.</p>
+                        
+                        <!-- Jinja Recursive Folder Macro -->
+                        {% macro render_tree(node) %}
+                            <ul class="list-unstyled ps-4">
+                                {% for key, val in node.items() %}
+                                    <li class="my-1">
+                                        <span class="tree-folder tree-folder-icon text-info"><i class="fa-solid fa-folder-open text-warning me-2"></i>{{ key }}</span>
+                                        {% if val and val is mapping %}
+                                            {{ render_tree(val) }}
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endmacro %}
+
+                        <div class="p-4 rounded border border-secondary bg-dark" style="max-height: 450px; overflow-y: auto;">
+                            <div class="tree-root">
+                                {{ render_tree(recs.folder_structure) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: C# Scripts Code Generator -->
+                    <div class="tab-pane fade" id="scripts" role="tabpanel" aria-labelledby="scripts-tab">
+                        <h4 class="text-white mb-3"><i class="fa-solid fa-file-code me-2 text-info"></i>Starter C# Code templates</h4>
+                        <p class="text-secondary small mb-4">Click tabs on the left to review script contents. Copy script contents or download the complete ZIP package.</p>
+                        
+                        <div class="row">
+                            <!-- Script Navigation tabs -->
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <div class="d-flex flex-column gap-2" role="tablist">
+                                    {% for filename in scripts.keys() %}
+                                        <button class="btn btn-outline-light script-tab text-start border-secondary py-2 text-truncate {% if loop.first %}active{% endif %}" 
+                                                id="tab-{{ filename | replace('.', '_') }}" 
+                                                onclick="showScript('{{ filename | replace('.', '_') }}')">
+                                            <i class="fa-solid fa-file-code text-primary me-2"></i>{{ filename }}
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Pre-code view -->
+                            <div class="col-md-9">
+                                {% for filename, code in scripts.items() %}
+                                    {% set fileId = filename | replace('.', '_') %}
+                                    <div class="script-code-block {% if not loop.first %}d-none{% endif %}" id="script-{{ fileId }}">
+                                        <div class="code-viewer-container">
+                                            <div class="code-viewer-header">
+                                                <span class="code-title"><i class="fa-solid fa-file-lines me-2 text-warning"></i>{{ filename }}</span>
+                                                <button class="btn btn-copy-code" id="btn-copy-{{ fileId }}" onclick="copyScriptToClipboard('btn-copy-{{ fileId }}', 'code-{{ fileId }}')">
+                                                    <i class="fa-regular fa-copy me-1"></i> Copy Code
+                                                </button>
+                                            </div>
+                                            <pre class="code-content-pre" id="code-{{ fileId }}">{{ code | forceescape }}</pre>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 6: Development Roadmap Timeline -->
+                    <div class="tab-pane fade" id="roadmap" role="tabpanel" aria-labelledby="roadmap-tab">
+                        <h4 class="text-white mb-4"><i class="fa-solid fa-route me-2 text-info"></i>Game Development Roadmap Checklist</h4>
+                        
+                        <div class="roadmap-timeline">
+                            {% for phase in recs.roadmap.phases %}
+                                <div class="roadmap-phase-card">
+                                    <div class="roadmap-phase-dot"></div>
+                                    <div class="p-3 rounded border border-secondary glass-card">
+                                        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                                            <h5 class="text-gradient-primary fs-6 mb-0">{{ phase.title }}</h5>
+                                            <span class="badge badge-custom badge-custom-teal">
+                                                <i class="fa-regular fa-clock me-1"></i> {{ phase.duration }}
+                                            </span>
+                                        </div>
+                                        <hr class="border-secondary my-2">
+                                        <div class="mt-2">
+                                            {% for task in phase.tasks %}
+                                                <div class="checklist-item">
+                                                    <i class="fa-regular fa-square checklist-check"></i>
+                                                    <span>{{ task }}</span>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div> <!-- End Tab Content -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

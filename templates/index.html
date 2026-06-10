@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}Unity Asset Recommendation - Home{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header Section -->
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-gradient-primary mb-2">
+                    <i class="fa-solid fa-gamepad me-2"></i>Unity AI Architect
+                </h1>
+                <p class="lead text-secondary">
+                    Get customized asset recommendations, software architectures, folder structures, starter scripts, and roadmap checklists in seconds.
+                </p>
+                {% if total_saved is defined and total_saved > 0 %}
+                    <span class="badge badge-custom badge-custom-teal">
+                        <i class="fa-solid fa-database me-1"></i> {{ total_saved }} Projects Analyzed & Saved
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Form Card -->
+            <div class="card glass-card border-secondary p-4 p-md-5">
+                <h3 class="mb-4 text-gradient-primary">
+                    <i class="fa-solid fa-compass-drafting me-2"></i>Configure Game Specifications
+                </h3>
+                
+                <form id="analyzeForm" action="{{ url_for('analyze') }}" method="POST" class="needs-validation" novalidate>
+                    <!-- Game Title -->
+                    <div class="mb-4">
+                        <label for="project_name" class="form-label">
+                            <i class="fa-solid fa-heading me-1 text-info"></i> Game Title
+                        </label>
+                        <input type="text" class="form-control" id="project_name" name="project_name" 
+                               value="{{ project_name if project_name else '' }}" 
+                               placeholder="e.g., Color Link Puzzle" required maxlength="100">
+                        <div class="invalid-feedback">Please enter a valid game title (max 100 characters).</div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <!-- Genre Dropdown -->
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="genre" class="form-label">
+                                <i class="fa-solid fa-tags me-1 text-info"></i> Genre
+                            </label>
+                            <select class="form-select" id="genre" name="genre" required>
+                                <option value="" disabled {% if not genre %}selected{% endif %}>Select Genre...</option>
+                                <option value="Platformer" {% if genre == 'Platformer' %}selected{% endif %}>Platformer</option>
+                                <option value="Puzzle" {% if genre == 'Puzzle' %}selected{% endif %}>Puzzle</option>
+                                <option value="RPG" {% if genre == 'RPG' %}selected{% endif %}>RPG</option>
+                                <option value="Shooter" {% if genre == 'Shooter' %}selected{% endif %}>Shooter</option>
+                                <option value="Action" {% if genre == 'Action' %}selected{% endif %}>Action</option>
+                                <option value="Strategy" {% if genre == 'Strategy' %}selected{% endif %}>Strategy</option>
+                                <option value="Adventure" {% if genre == 'Adventure' %}selected{% endif %}>Adventure</option>
+                                <option value="Simulation" {% if genre == 'Simulation' %}selected{% endif %}>Simulation</option>
+                                <option value="Racing" {% if genre == 'Racing' %}selected{% endif %}>Racing</option>
+                                <option value="Sandbox" {% if genre == 'Sandbox' %}selected{% endif %}>Sandbox</option>
+                                <option value="VR/AR" {% if genre == 'VR/AR' %}selected{% endif %}>VR/AR</option>
+                                <option value="Mobile Casual" {% if genre == 'Mobile Casual' %}selected{% endif %}>Mobile Casual</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a genre.</div>
+                        </div>
+
+                        <!-- Platform Dropdown -->
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="platform" class="form-label">
+                                <i class="fa-solid fa-laptop-code me-1 text-info"></i> Platform
+                            </label>
+                            <select class="form-select" id="platform" name="platform" required>
+                                <option value="" disabled {% if not platform %}selected{% endif %}>Select Platform...</option>
+                                <option value="PC" {% if platform == 'PC' %}selected{% endif %}>PC</option>
+                                <option value="Android" {% if platform == 'Android' %}selected{% endif %}>Android (Mobile)</option>
+                                <option value="iOS" {% if platform == 'iOS' %}selected{% endif %}>iOS (Mobile)</option>
+                                <option value="Console" {% if platform == 'Console' %}selected{% endif %}>Console (PlayStation/Xbox/Switch)</option>
+                                <option value="WebGL" {% if platform == 'WebGL' %}selected{% endif %}>WebGL (Web Browser)</option>
+                                <option value="VR/AR" {% if platform == 'VR/AR' %}selected{% endif %}>VR/AR Headsets</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a platform.</div>
+                        </div>
+
+                        <!-- Target Audience Dropdown -->
+                        <div class="col-md-4">
+                            <label for="target_audience" class="form-label">
+                                <i class="fa-solid fa-users me-1 text-info"></i> Target Audience
+                            </label>
+                            <select class="form-select" id="target_audience" name="target_audience" required>
+                                <option value="" disabled {% if not target_audience %}selected{% endif %}>Select Audience...</option>
+                                <option value="Kids" {% if target_audience == 'Kids' %}selected{% endif %}>Kids</option>
+                                <option value="Casual" {% if target_audience == 'Casual' %}selected{% endif %}>Casual</option>
+                                <option value="Core" {% if target_audience == 'Core' %}selected{% endif %}>Core Developers/Gamers</option>
+                                <option value="Hardcore" {% if target_audience == 'Hardcore' %}selected{% endif %}>Hardcore</option>
+                            </select>
+                            <div class="invalid-feedback">Please select an audience.</div>
+                        </div>
+                    </div>
+
+                    <!-- Game Description -->
+                    <div class="mb-4">
+                        <label for="description" class="form-label">
+                            <i class="fa-solid fa-pen-nib me-1 text-info"></i> Game Description
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="5" 
+                                  placeholder="Describe your game idea in detail. What are the key mechanics? How does the player interact with the game? What is the main win condition or loop? (Minimum 20 characters)" 
+                                  required minlength="20" maxlength="2000">{{ description if description else '' }}</textarea>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="invalid-feedback">Please write a description between 20 and 2000 characters.</div>
+                            <div class="char-count ms-auto" id="descCount">0 / 2000</div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings Accordion -->
+                    <div class="accordion accordion-flush mb-4" id="advancedAccordion">
+                        <div class="accordion-item bg-transparent border-0">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-transparent text-gradient-secondary p-0 pb-2 border-0 border-bottom border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced" style="box-shadow: none;">
+                                    <i class="fa-solid fa-sliders me-2"></i> Advanced AI Settings
+                                </button>
+                            </h2>
+                            <div id="collapseAdvanced" class="accordion-collapse collapse" data-bs-parent="#advancedAccordion">
+                                <div class="accordion-body px-0 pt-3 text-secondary">
+                                    <label for="engine_choice" class="form-label small text-muted">AI API Key Choice</label>
+                                    <select class="form-select form-select-sm" id="engine_choice" name="engine_choice">
+                                        <option value="auto">Auto-Detect API Keys (Recommended)</option>
+                                        <option value="gemini">Force Gemini API (uses GEMINI_API_KEY)</option>
+                                        <option value="openai">Force OpenAI API (uses OPENAI_API_KEY)</option>
+                                        <option value="mock">Force Mock/Demo Mode (Generates immediately without keys)</option>
+                                    </select>
+                                    <p class="small text-muted mt-2 mb-0">
+                                        Note: If API Keys are not set in the `.env` file, the application will automatically fall back to the built-in Mock generator to ensure smooth demonstration.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary-custom py-3">
+                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Analyze & Generate Project Assets
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Gear Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loader-container">
+        <div class="loader-gear"></div>
+        <div class="loader-gear-small"></div>
+        <i class="fa-brands fa-unity text-white fs-1 position-absolute" style="z-index: 10;"></i>
+    </div>
+    <div class="loader-text text-gradient-primary">Architecting Project...</div>
+    <div class="text-secondary mt-2 small text-center px-4" id="statusMessage">
+        Extracting mechanics and genre complexity parameters...
+    </div>
+</div>
+
+<script>
+    // Custom form validations for Bootstrap
+    (() => {
+        'use strict'
+        const forms = document.querySelectorAll('.needs-validation')
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+</script>
+{% endblock %}

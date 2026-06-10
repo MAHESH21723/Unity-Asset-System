@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Unity Asset Recommendation - History{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-6 fw-bold text-gradient-primary mb-2">
+            <i class="fa-solid fa-clock-rotate-left me-2"></i>Recommendation History
+        </h1>
+        <p class="lead text-secondary">Review, search, compare, and manage your previously generated Unity game architectures.</p>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card glass-card border-secondary p-4 mb-5">
+        <form method="GET" action="{{ url_for('history') }}" class="row g-3 align-items-end">
+            <!-- Text Search -->
+            <div class="col-md-5">
+                <label for="q" class="form-label small text-secondary">Search Projects</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-dark border-secondary text-secondary"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="Search by title or description...">
+                </div>
+            </div>
+
+            <!-- Genre Filter -->
+            <div class="col-md-4">
+                <label for="genre" class="form-label small text-secondary">Filter by Genre</label>
+                <select class="form-select" id="genre" name="genre">
+                    <option value="">All Genres</option>
+                    {% for g in genres %}
+                        <option value="{{ g }}" {% if selected_genre == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary-custom w-100 py-2">
+                    <i class="fa-solid fa-filter me-1"></i> Filter
+                </button>
+                {% if search_query or selected_genre %}
+                    <a href="{{ url_for('history') }}" class="btn btn-outline-secondary w-50 py-2 d-flex align-items-center justify-content-center" style="border-color: rgba(255,255,255,0.2); color: #ccc;">
+                        Clear
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Projects List -->
+    {% if projects %}
+        <div class="row">
+            {% for project in projects %}
+                <div class="col-md-6 mb-4">
+                    <div class="card glass-card border-secondary h-100 d-flex flex-column p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h3 class="h4 text-white mb-0 text-truncate" style="max-width: 70%;">{{ project.project_name }}</h3>
+                            <span class="small text-muted"><i class="fa-regular fa-calendar me-1"></i>{{ project.created_at.split(' ')[0] }}</span>
+                        </div>
+
+                        <!-- Badges row -->
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            <span class="badge badge-custom badge-custom-teal">{{ project.genre }}</span>
+                            <span class="badge badge-custom badge-custom-purple">{{ project.platform }}</span>
+                            <span class="badge badge-custom badge-custom-teal">{{ project.target_audience }}</span>
+                        </div>
+
+                        <!-- Description Snippet -->
+                        <p class="text-secondary small mb-4 flex-grow-1 text-truncate-3" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; height: 4.8em;">
+                            {{ project.description }}
+                        </p>
+
+                        <hr class="border-secondary my-3">
+
+                        <!-- Action Controls -->
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('results', project_id=project.id) }}" class="btn btn-secondary-custom btn-sm py-1.5 px-3">
+                                    <i class="fa-solid fa-eye me-1"></i> View
+                                </a>
+                                <a href="{{ url_for('download_zip', project_id=project.id) }}" class="btn btn-primary-custom btn-sm py-1.5 px-3" title="Download Starter Kit (ZIP)">
+                                    <i class="fa-solid fa-file-zipper"></i>
+                                </a>
+                            </div>
+
+                            <form action="{{ url_for('delete_project', project_id=project.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete \'' + {{ project.project_name | tojson }} + '\'?');">
+                                <button type="submit" class="btn-danger-custom btn-sm border-0 bg-transparent text-danger px-2 py-1" title="Delete record">
+                                    <i class="fa-solid fa-trash-can"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-5 glass-card border-secondary p-5">
+            <i class="fa-solid fa-folder-open text-muted mb-4" style="font-size: 4rem;"></i>
+            <h3 class="text-white">No Recommendations Found</h3>
+            <p class="text-secondary max-width-md mx-auto">
+                {% if search_query or selected_genre %}
+                    Try clearing filters or running a different query.
+                {% else %}
+                    You haven't generated any Unity project recommendations yet. Get started by entering your game concept!
+                {% endif %}
+            </p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary-custom mt-3">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Create Recommendation
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
