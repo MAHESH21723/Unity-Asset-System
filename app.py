@@ -30,6 +30,8 @@ from flask import (
     url_for,
 )
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 from ai_engine import ENGINES, generate_recommendations
 from exports import build_markdown_report, build_starter_kit, safe_filename
 
@@ -45,6 +47,8 @@ GENRES = (
 )
 PLATFORMS = ("PC", "Android", "iOS", "Console", "WebGL", "VR/AR")
 AUDIENCES = ("Kids", "Casual", "Core", "Hardcore")
+
+DEMO_NOTICE = "Public demo: data is shared and resets, don't enter personal information."
 
 MAX_TITLE = 100
 MIN_DESCRIPTION = 20
@@ -155,6 +159,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         CSRF_ENABLED=True,
         MAX_CONTENT_LENGTH=64 * 1024,
     )
+    if os.getenv("RENDER"):
+        # Behind Render's HTTPS proxy: trust one hop of X-Forwarded-* headers.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+        app.config["SESSION_COOKIE_SECURE"] = True
+    app.config["DEMO_DATA"] = os.getenv("DEMO_DATA") == "1"
     if test_config:
         app.config.update(test_config)
 
@@ -182,7 +191,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
                 session["csrf_token"] = secrets.token_hex(16)
             return session["csrf_token"]
 
-        return {"csrf_token": csrf_token}
+        return {
+            "csrf_token": csrf_token,
+            "demo_mode": app.config["DEMO_DATA"],
+            "demo_notice": DEMO_NOTICE,
+        }
 
     @app.after_request
     def _security_headers(response):

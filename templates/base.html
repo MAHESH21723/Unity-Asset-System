@@ -14,6 +14,7 @@
     {% block head %}{% endblock %}
 </head>
 <body>
+    {% if demo_mode %}<div role="note" style="background:#fff3cd;color:#664d03;text-align:center;padding:6px 12px;font-size:.85rem;">{{ demo_notice }}</div>{% endif %}
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
         <div class="container">
