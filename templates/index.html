@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Unity AI Architect - Home{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-gradient-primary mb-2">
+                    <i class="fa-solid fa-gamepad me-2"></i>Unity AI Architect
+                </h1>
+                <p class="lead text-secondary">
+                    Get asset recommendations, a software architecture, a folder structure, starter C# scripts and a roadmap for your Unity game idea.
+                </p>
+                {% if total_saved %}
+                    <span class="badge badge-custom badge-custom-teal">
+                        <i class="fa-solid fa-database me-1"></i> {{ total_saved }} Projects Analyzed &amp; Saved
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="card glass-card border-secondary p-4 p-md-5">
+                <h2 class="h3 mb-4 text-gradient-primary">
+                    <i class="fa-solid fa-compass-drafting me-2"></i>Configure Game Specifications
+                </h2>
+
+                <form id="analyzeForm" action="{{ url_for('analyze') }}" method="POST" class="needs-validation" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-4">
+                        <label for="project_name" class="form-label">
+                            <i class="fa-solid fa-heading me-1 text-info"></i> Game Title
+                        </label>
+                        <input type="text" class="form-control" id="project_name" name="project_name"
+                               value="{{ project_name or '' }}"
+                               placeholder="e.g., Color Link Puzzle" required maxlength="100">
+                        <div class="invalid-feedback">Please enter a valid game title (max 100 characters).</div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="genre" class="form-label">
+                                <i class="fa-solid fa-tags me-1 text-info"></i> Genre
+                            </label>
+                            <select class="form-select" id="genre" name="genre" required>
+                                <option value="" disabled {% if not genre %}selected{% endif %}>Select Genre...</option>
+                                {% for item in genres %}
+                                    <option value="{{ item }}" {% if genre == item %}selected{% endif %}>{{ item }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a genre.</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3 mb-md-0">
+                            <label for="platform" class="form-label">
+                                <i class="fa-solid fa-laptop-code me-1 text-info"></i> Platform
+                            </label>
+                            <select class="form-select" id="platform" name="platform" required>
+                                <option value="" disabled {% if not platform %}selected{% endif %}>Select Platform...</option>
+                                {% for item in platforms %}
+                                    <option value="{{ item }}" {% if platform == item %}selected{% endif %}>{{ item }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select a platform.</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="target_audience" class="form-label">
+                                <i class="fa-solid fa-users me-1 text-info"></i> Target Audience
+                            </label>
+                            <select class="form-select" id="target_audience" name="target_audience" required>
+                                <option value="" disabled {% if not target_audience %}selected{% endif %}>Select Audience...</option>
+                                {% for item in audiences %}
+                                    <option value="{{ item }}" {% if target_audience == item %}selected{% endif %}>{{ item }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">Please select an audience.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label">
+                            <i class="fa-solid fa-pen-nib me-1 text-info"></i> Game Description
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="5"
+                                  placeholder="Describe your game idea: key mechanics, how the player interacts with it, and the main win condition or loop (minimum 20 characters)."
+                                  required minlength="20" maxlength="2000">{{ description or '' }}</textarea>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="invalid-feedback">Please write a description between 20 and 2000 characters.</div>
+                            <div class="char-count ms-auto" id="descCount">0 / 2000</div>
+                        </div>
+                    </div>
+
+                    <div class="accordion accordion-flush mb-4" id="advancedAccordion">
+                        <div class="accordion-item bg-transparent border-0">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-transparent text-gradient-secondary p-0 pb-2 border-0 border-bottom border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced">
+                                    <i class="fa-solid fa-sliders me-2"></i> Advanced Settings
+                                </button>
+                            </h2>
+                            <div id="collapseAdvanced" class="accordion-collapse collapse" data-bs-parent="#advancedAccordion">
+                                <div class="accordion-body px-0 pt-3 text-secondary">
+                                    <label for="engine_choice" class="form-label small text-muted">Generation engine</label>
+                                    <select class="form-select form-select-sm" id="engine_choice" name="engine_choice">
+                                        <option value="auto" {% if engine_choice in (none, 'auto') %}selected{% endif %}>Auto (use an API key if configured, otherwise offline)</option>
+                                        <option value="mock" {% if engine_choice == 'mock' %}selected{% endif %}>Offline rule-based engine (no key needed)</option>
+                                        <option value="gemini" {% if engine_choice == 'gemini' %}selected{% endif %}>Gemini (needs GEMINI_API_KEY)</option>
+                                        <option value="openai" {% if engine_choice == 'openai' %}selected{% endif %}>OpenAI (needs OPENAI_API_KEY)</option>
+                                    </select>
+                                    <p class="small text-muted mt-2 mb-0">
+                                        The app works fully offline. If no API key is set in <code>.env</code>, or a provider fails, the built-in rule-based engine is used automatically.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary-custom py-3">
+                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Analyze &amp; Generate Project Assets
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+    <div class="loader-container">
+        <div class="loader-gear"></div>
+        <div class="loader-gear-small"></div>
+        <i class="fa-brands fa-unity text-white fs-1 position-absolute loader-icon"></i>
+    </div>
+    <div class="loader-text text-gradient-primary">Architecting Project...</div>
+    <div class="text-secondary mt-2 small text-center px-4" id="statusMessage">
+        Extracting mechanics and genre complexity parameters...
+    </div>
+</div>
+{% endblock %}

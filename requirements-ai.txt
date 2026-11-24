@@ -1,0 +1,4 @@
+# Optional: only needed to use the OpenAI / Gemini engines.
+-r requirements.txt
+openai>=1.0
+google-genai>=1.0
