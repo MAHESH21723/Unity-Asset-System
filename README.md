@@ -24,7 +24,7 @@ It works **fully offline** out of the box using a built-in rule-based engine. Op
 
 ## Live demo
 
-Live demo: (link added after first deploy)
+**Live demo: [https://unity-asset-system.onrender.com](https://unity-asset-system.onrender.com)** (free hosting: the first visit after a quiet spell can take up to a minute to wake up)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/MAHESH21723/Unity-Asset-System)
 
